@@ -4,7 +4,7 @@ import App from './App';
 import MainContent from './MainContent';
 
 export default function Main() {
-  const app = useMemo(() => new App(), []);
+  const app = useMemo(() => App.create(), []);
   const [state, setState] = useState({
     labels: null as readonly string[] | null,
   });

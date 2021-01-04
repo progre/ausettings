@@ -15,7 +15,7 @@ fn main() {
     web_view::builder()
         .title("ausettings")
         .content(Content::Html(include_str!("../dist/index.html")))
-        .size(320, 480)
+        .size(370, 640)
         .resizable(true)
         .debug(true)
         .user_data(())

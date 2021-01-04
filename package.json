@@ -25,16 +25,17 @@
   "main": "index.html",
   "private": "true",
   "scripts": {
-    "_build": "parcel build src-web/index.html",
-    "_build-dev": "parcel build --no-minify src-web/index.html",
     "_cargo-build": "cargo build --release",
     "_cargo-run": "cargo run",
-    "_clean-build": "run-s clean _build _remove_unused_files _cargo-build",
+    "_clean-build": "run-s clean _web-build _remove_unused_files _cargo-build",
     "_license-js": "cross-env NODE_ENV=production yarn licenses generate-disclaimer > license-js.txt",
     "_license-rs": "cargo-license --json > license-rs.json",
     "_remove_unused_files": "del dist\\*.js dist\\*.js.map",
+    "_web-build": "parcel build src-web/index.html",
+    "_web-build-dev": "parcel build --no-minify src-web/index.html",
     "build": "run-p _clean-build _license-js _license-rs",
     "clean": "del dist",
-    "dev": "run-s _build-dev _remove_unused_files _cargo-run"
+    "dev": "run-s dev-web _cargo-run",
+    "dev-web": "run-s _web-build-dev _remove_unused_files"
   }
 }

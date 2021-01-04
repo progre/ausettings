@@ -31,6 +31,13 @@ interface GameSettingsListItem {
 }
 
 export default class App {
+  static create() {
+    if (window.external.invoke == null) {
+      return new AppMock();
+    }
+    return new App();
+  }
+
   gameSettingsList() {
     return invoke<readonly GameSettingsListItem[]>('game_settings_list', {});
   }
@@ -46,4 +53,19 @@ export default class App {
   loadMemoryFromFile(index: number) {
     return invoke<void>('load_memory_from_file', { index });
   }
+}
+
+export class AppMock {
+  async gameSettingsList() {
+    return [...Array(10).keys()].map((x) => ({
+      name: `Mock ${x + 1}`,
+      gameSettings: x % 2 === 0 ? '' : null,
+    }));
+  }
+
+  async setGameSettingsName(index: number, name: string) {}
+
+  async saveMemoryToFile(index: number) {}
+
+  async loadMemoryFromFile(index: number) {}
 }

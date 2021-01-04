@@ -1,11 +1,19 @@
-import { Button, TextField } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import {
+  Button,
+  Container,
+  TextField,
+  Typography,
+  makeStyles,
+} from '@material-ui/core';
 import React, { useCallback, FocusEvent } from 'react';
 
 const useStyles = makeStyles({
+  root: {
+    marginTop: '16px',
+  },
   listContainer: {
     padding: 0,
-    margin: '10px 20px',
+    margin: '32px 0',
   },
   listItem: {
     display: 'flex',
@@ -78,18 +86,25 @@ export interface Props {
 export default function MainContent(props: Props) {
   const classes = useStyles();
   return (
-    <ul className={classes.listContainer}>
-      {props.labels.map((x, i) => (
-        <li className={classes.listItem}>
-          <ListItem
-            index={i}
-            label={x}
-            onChangeLabel={props.onChangeLabel}
-            onClickSave={props.onClickSave}
-            onClickLoad={props.onClickLoad}
-          />
-        </li>
-      ))}
-    </ul>
+    <Container className={classes.root}>
+      <Typography>
+        <strong>⚠️Important</strong>:<br />
+        After LOAD, <b>change any of the settings in the game</b> to apply the
+        settings to other players.
+      </Typography>
+      <ul className={classes.listContainer}>
+        {props.labels.map((x, i) => (
+          <li className={classes.listItem}>
+            <ListItem
+              index={i}
+              label={x}
+              onChangeLabel={props.onChangeLabel}
+              onClickSave={props.onClickSave}
+              onClickLoad={props.onClickLoad}
+            />
+          </li>
+        ))}
+      </ul>
+    </Container>
   );
 }
