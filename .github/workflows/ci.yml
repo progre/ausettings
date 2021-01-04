@@ -23,12 +23,6 @@ jobs:
           path: target
           key: cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release
-
-
       - run: |
           npm install
           npm run build
