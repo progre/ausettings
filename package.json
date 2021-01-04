@@ -29,7 +29,7 @@
     "_build-dev": "parcel build --no-minify src-web/index.html",
     "_cargo-build": "cargo build --release",
     "_cargo-run": "cargo run",
-    "_clean-build": "run-s clean _build _remove_unused_files _cargo-build license",
+    "_clean-build": "run-s clean _build _remove_unused_files _cargo-build",
     "_license-js": "cross-env NODE_ENV=production yarn licenses generate-disclaimer > license-js.txt",
     "_license-rs": "cargo-license --json > license-rs.json",
     "_remove_unused_files": "del dist\\*.js dist\\*.js.map",
