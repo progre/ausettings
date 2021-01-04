@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "moduleResolution": "Node",
+    "strict": true,
+    "target": "ES2015",
+    "sourceMap": true
+  }
+}
