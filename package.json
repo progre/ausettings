@@ -1,7 +1,7 @@
 {
   "name": "ausettings",
   "description": "none",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "dependencies": {
     "@material-ui/core": "^4.11.2",
     "core-js": "^3.8.1",
