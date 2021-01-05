@@ -18,12 +18,14 @@ fn data_path() -> PathBuf {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GameSettingsListItem {
     pub name: String,
     pub game_settings: Option<GameSettings>,
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Storage {
     pub game_settings_list: Vec<GameSettingsListItem>,
 }
