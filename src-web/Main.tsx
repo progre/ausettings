@@ -6,31 +6,40 @@ import MainContent from './MainContent';
 export default function Main() {
   const app = useMemo(() => App.create(), []);
   const [state, setState] = useState({
-    labels: null as readonly string[] | null,
+    gameSettingsList: null as
+      | readonly { name: string; gameSettings: Object | null }[]
+      | null,
   });
   useEffect(() => {
     (async () => {
-      const list = await app.gameSettingsList();
-      setState({ labels: list.map((x) => x.name) });
+      const gameSettingsList = await app.gameSettingsList();
+      setState({ gameSettingsList });
     })().catch(console.error);
   }, []);
 
-  const onChangeLabel = useCallback((idx, value) => {
-    app.setGameSettingsName(idx, value);
+  const onChangeLabel = useCallback(async (idx, value) => {
+    await app.setGameSettingsName(idx, value);
   }, []);
-  const onClickLoad = useCallback((idx) => {
-    app.loadMemoryFromFile(idx);
+  const onClickLoad = useCallback(async (idx) => {
+    await app.loadMemoryFromFile(idx);
   }, []);
-  const onClickSave = useCallback((idx) => {
-    app.saveMemoryToFile(idx);
+  const onClickSave = useCallback(async (idx) => {
+    await app.saveMemoryToFile(idx);
+    setState((old) => ({
+      ...old,
+      gameSettingsList:
+        old.gameSettingsList?.map((x, i) =>
+          i != idx || x.gameSettings != null ? x : { ...x, gameSettings: {} },
+        ) ?? null,
+    }));
   }, []);
 
-  if (state.labels == null) {
+  if (state.gameSettingsList == null) {
     return <CircularProgress />;
   }
   return (
     <MainContent
-      labels={state.labels}
+      gameSettingsList={state.gameSettingsList}
       onChangeLabel={onChangeLabel}
       onClickLoad={onClickLoad}
       onClickSave={onClickSave}

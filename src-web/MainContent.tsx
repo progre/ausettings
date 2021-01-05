@@ -33,19 +33,21 @@ function ListItem(props: {
   label: string;
   onChangeLabel(index: number, value: string): void;
   onClickSave(index: number): void;
-  onClickLoad(index: number): void;
+  onClickLoad?: ((index: number) => void) | null;
 }) {
   const onChangeLabel = useCallback(
     (e: FocusEvent) => {
       const target = e.target as HTMLInputElement;
       props.onChangeLabel(props.index, target.value);
     },
-    [props.index],
+    [props.onChangeLabel, props.index],
   );
   const onClickSave = useCallback(() => props.onClickSave(props.index), [
+    props.onClickSave,
     props.index,
   ]);
-  const onClickLoad = useCallback(() => props.onClickLoad(props.index), [
+  const onClickLoad = useCallback(() => props.onClickLoad?.(props.index), [
+    props.onClickLoad,
     props.index,
   ]);
   const classes = useStyles();
@@ -68,6 +70,7 @@ function ListItem(props: {
         className={classes.button}
         color="primary"
         variant="outlined"
+        disabled={props.onClickLoad == null}
         onClick={onClickLoad}
       >
         Load
@@ -77,7 +80,7 @@ function ListItem(props: {
 }
 
 export interface Props {
-  labels: readonly string[];
+  gameSettingsList: readonly { name: string; gameSettings: Object | null }[];
   onChangeLabel(index: number, value: string): void;
   onClickSave(index: number): void;
   onClickLoad(index: number): void;
@@ -93,14 +96,14 @@ export default function MainContent(props: Props) {
         settings to other players.
       </Typography>
       <ul className={classes.listContainer}>
-        {props.labels.map((x, i) => (
+        {props.gameSettingsList.map((x, i) => (
           <li className={classes.listItem}>
             <ListItem
               index={i}
-              label={x}
+              label={x.name}
               onChangeLabel={props.onChangeLabel}
               onClickSave={props.onClickSave}
-              onClickLoad={props.onClickLoad}
+              onClickLoad={x.gameSettings == null ? null : props.onClickLoad}
             />
           </li>
         ))}
