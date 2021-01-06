@@ -1,68 +1,75 @@
-use serde_json::{json, Value};
-use web_view::{WVResult, WebView};
+use std::sync::Arc;
 
-use crate::core::app::{App, AppError};
+use serde_json::{json, Value};
+use tokio::{spawn, sync::Mutex};
+use web_view::{Handle, WVResult, WebView};
+
+use crate::core::app::App;
+
+async fn invoke_handler<T>(handle: Handle<T>, arg: &str, app_mutex: &Mutex<App>) {
+    let json: Value = serde_json::from_str(arg).unwrap();
+    let mut app = app_mutex.lock().await;
+    let (err, result) = match json["type"].as_str().unwrap() {
+        "game_settings_list" => (
+            "null".to_owned(),
+            serde_json::to_string(&app.game_settings_list().await).unwrap(),
+        ),
+        "set_game_settings_name" => {
+            let payload = &json["payload"];
+            let idx = payload["index"].as_u64().unwrap() as usize;
+            let name = payload["name"].as_str().unwrap();
+            app.set_game_settings_name(idx, name.into());
+            ("null".into(), "null".into())
+        }
+        "save_memory_to_file" => {
+            let payload = &json["payload"];
+            let idx = payload["index"].as_u64().unwrap() as usize;
+            match app.save_memory_to_file(idx).await {
+                Some(_) => ("null".into(), "null".into()),
+                None => (json!({ "name": "Error" }).to_string(), "null".into()),
+            }
+        }
+        "load_memory_from_file" => {
+            let payload = &json["payload"];
+            let idx = payload["index"].as_u64().unwrap() as usize;
+            match app.load_memory_from_file(idx).await {
+                Some(_) => ("null".into(), "null".into()),
+                None => (json!({ "name": "Error" }).to_string(), "null".into()),
+            }
+        }
+        _ => unreachable!(),
+    };
+    let eval = format!(
+        "{}({}, {})",
+        json["callback"].as_str().unwrap(),
+        err,
+        result
+    );
+    println!("<-- {}", eval);
+    handle
+        .dispatch(move |web_view| web_view.eval(&eval))
+        .unwrap_or_else(|err| eprintln!("{}", err));
+}
 
 pub struct AppWrapper {
-    app: App,
+    app: Arc<Mutex<App>>,
 }
 
 impl AppWrapper {
     pub fn new() -> Self {
-        Self { app: App::new() }
+        Self {
+            app: Arc::new(Mutex::new(App::new())),
+        }
     }
 
-    pub fn invoke_handler<T>(&mut self, web_view: &mut WebView<T>, arg: &str) -> WVResult {
-        println!("--> {}", arg);
-        let json: Value = serde_json::from_str(arg).unwrap();
-        match json["type"].as_str().unwrap() {
-            "init" => {
-                let eval = match self.app.init() {
-                    Ok(list) => {
-                        format!(
-                            "{}(null, {})",
-                            json["callback"].as_str().unwrap(),
-                            serde_json::to_string(&list).unwrap()
-                        )
-                    }
-                    Err(err) => {
-                        let name = match err {
-                            AppError::FetchFailed(_) => "FetchError",
-                            AppError::ParseFailed(_) => "ParseError",
-                            AppError::ProcessNotFound => "ProcessNotFoundError",
-                            AppError::DllNotFound(_) => "DllNotFoundError",
-                        };
-                        format!(
-                            "{}({})",
-                            json["callback"].as_str().unwrap(),
-                            json!({ "name": name }).to_string()
-                        )
-                    }
-                };
-                println!("<-- {}", eval);
-                web_view.eval(&eval)?;
-            }
-            "set_game_settings_name" => {
-                let payload = &json["payload"];
-                let idx = payload["index"].as_u64().unwrap() as usize;
-                let name = payload["name"].as_str().unwrap();
-                self.app.set_game_settings_name(idx, name.into());
-                web_view.eval(&format!("{}(null)", json["callback"].as_str().unwrap()))?;
-            }
-            "save_memory_to_file" => {
-                let payload = &json["payload"];
-                let idx = payload["index"].as_u64().unwrap() as usize;
-                self.app.save_memory_to_file(idx);
-                web_view.eval(&format!("{}(null)", json["callback"].as_str().unwrap()))?;
-            }
-            "load_memory_from_file" => {
-                let payload = &json["payload"];
-                let idx = payload["index"].as_u64().unwrap() as usize;
-                self.app.load_memory_from_file(idx);
-                web_view.eval(&format!("{}(null)", json["callback"].as_str().unwrap()))?;
-            }
-            _ => unreachable!(),
-        }
+    pub fn invoke_handler(&mut self, web_view: &mut WebView<()>, arg: &str) -> WVResult {
+        let handle = web_view.handle();
+        let arg = arg.to_owned();
+        let app = self.app.clone();
+        spawn(async move {
+            println!("--> {}", arg);
+            invoke_handler(handle, &arg, &app).await;
+        });
         Ok(())
     }
 }

@@ -10,7 +10,8 @@ use web_view::*;
 
 use crate::ui::app_wrapper::AppWrapper;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let mut app_wrapper = AppWrapper::new();
     web_view::builder()
         .title("ausettings")

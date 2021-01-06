@@ -27,6 +27,10 @@ pub struct Process {
     // old_protect: DWORD,
 }
 
+unsafe impl Send for Process {}
+
+unsafe impl Sync for Process {}
+
 impl Process {
     pub fn find(exe_file: &str) -> Option<Process> {
         unsafe {
