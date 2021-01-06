@@ -11,7 +11,7 @@ use web_view::*;
 use crate::ui::app_wrapper::AppWrapper;
 
 fn main() {
-    let app_wrapper = AppWrapper::new();
+    let mut app_wrapper = AppWrapper::new();
     web_view::builder()
         .title("ausettings")
         .content(Content::Html(include_str!("../dist/index.html")))

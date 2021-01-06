@@ -1,7 +1,7 @@
-use serde_json::Value;
+use serde_json::{json, Value};
 use web_view::{WVResult, WebView};
 
-use crate::core::app::App;
+use crate::core::app::{App, AppError};
 
 pub struct AppWrapper {
     app: App,
@@ -12,18 +12,34 @@ impl AppWrapper {
         Self { app: App::new() }
     }
 
-    pub fn invoke_handler<T>(&self, web_view: &mut WebView<T>, arg: &str) -> WVResult {
-        println!("{}", arg);
+    pub fn invoke_handler<T>(&mut self, web_view: &mut WebView<T>, arg: &str) -> WVResult {
+        println!("--> {}", arg);
         let json: Value = serde_json::from_str(arg).unwrap();
         match json["type"].as_str().unwrap() {
-            "game_settings_list" => {
-                let list = self.app.game_settings_list();
-                let eval = format!(
-                    "{}(null, {})",
-                    json["callback"].as_str().unwrap(),
-                    serde_json::to_string(&list).unwrap()
-                );
-                println!("{}", eval);
+            "init" => {
+                let eval = match self.app.init() {
+                    Ok(list) => {
+                        format!(
+                            "{}(null, {})",
+                            json["callback"].as_str().unwrap(),
+                            serde_json::to_string(&list).unwrap()
+                        )
+                    }
+                    Err(err) => {
+                        let name = match err {
+                            AppError::FetchFailed(_) => "FetchError",
+                            AppError::ParseFailed(_) => "ParseError",
+                            AppError::ProcessNotFound => "ProcessNotFoundError",
+                            AppError::DllNotFound(_) => "DllNotFoundError",
+                        };
+                        format!(
+                            "{}({})",
+                            json["callback"].as_str().unwrap(),
+                            json!({ "name": name }).to_string()
+                        )
+                    }
+                };
+                println!("<-- {}", eval);
                 web_view.eval(&eval)?;
             }
             "set_game_settings_name" => {

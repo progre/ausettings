@@ -29,13 +29,13 @@ impl Process {
         0.0
     }
 
-    pub fn write_u8(&mut self, _address: u32, _value: u8) {}
+    pub fn write_u8(&self, _address: u32, _value: u8) {}
 
-    pub fn write_i32(&mut self, _address: u32, _value: i32) {}
+    pub fn write_i32(&self, _address: u32, _value: i32) {}
 
-    pub fn write_f32(&mut self, _address: u32, _value: f32) {}
+    pub fn write_f32(&self, _address: u32, _value: f32) {}
 
-    // pub fn write(&mut self, address: u32, buf: &[u8]) {}
+    // pub fn write(&self, address: u32, buf: &[u8]) {}
 }
 
 impl Drop for Process {

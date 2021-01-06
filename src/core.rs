@@ -1,5 +1,7 @@
 pub mod app;
+mod aucaptureoffsets;
 mod auprocess;
+mod auprocessreadwrite;
 mod game_settings;
 mod process;
 #[cfg(windows)]

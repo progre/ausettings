@@ -107,35 +107,35 @@ impl Process {
         }
     }
 
-    pub fn write_u8(&mut self, address: u32, value: u8) {
+    pub fn write_u8(&self, address: u32, value: u8) {
         let buf = value.to_le_bytes();
         unsafe {
             write_process_memory(self.process, address, &buf);
         }
     }
 
-    // pub fn write_u32(&mut self, address: u32, value: u32) {
+    // pub fn write_u32(&self, address: u32, value: u32) {
     //     let buf = value.to_le_bytes();
     //     unsafe {
     //         write_process_memory(self.process, address, &buf);
     //     }
     // }
 
-    pub fn write_i32(&mut self, address: u32, value: i32) {
+    pub fn write_i32(&self, address: u32, value: i32) {
         let buf = value.to_le_bytes();
         unsafe {
             write_process_memory(self.process, address, &buf);
         }
     }
 
-    pub fn write_f32(&mut self, address: u32, value: f32) {
+    pub fn write_f32(&self, address: u32, value: f32) {
         let buf = value.to_le_bytes();
         unsafe {
             write_process_memory(self.process, address, &buf);
         }
     }
 
-    // pub fn write(&mut self, address: u32, buf: &[u8]) {
+    // pub fn write(&self, address: u32, buf: &[u8]) {
     //     unsafe {
     //         write_process_memory(self.process, address, buf);
     //     }

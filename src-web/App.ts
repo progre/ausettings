@@ -38,8 +38,8 @@ export default class App {
     return new App();
   }
 
-  gameSettingsList() {
-    return invoke<readonly GameSettingsListItem[]>('game_settings_list', {});
+  init() {
+    return invoke<readonly GameSettingsListItem[]>('init', {});
   }
 
   setGameSettingsName(index: number, name: string) {
@@ -56,7 +56,7 @@ export default class App {
 }
 
 export class AppMock {
-  async gameSettingsList() {
+  async init() {
     return [...Array(10).keys()].map((x) => ({
       name: `Mock ${x + 1}`,
       gameSettings: x % 2 === 0 ? '' : null,

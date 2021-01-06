@@ -12,7 +12,7 @@ export default function Main() {
   });
   useEffect(() => {
     (async () => {
-      const gameSettingsList = await app.gameSettingsList();
+      const gameSettingsList = await app.init();
       setState({ gameSettingsList });
     })().catch(console.error);
   }, []);
