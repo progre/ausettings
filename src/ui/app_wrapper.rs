@@ -1,10 +1,13 @@
 use std::sync::Arc;
 
 use serde_json::{json, Value};
-use tokio::{spawn, sync::Mutex};
+use tokio::{
+    spawn,
+    sync::{mpsc, Mutex},
+};
 use web_view::{Handle, WVResult, WebView};
 
-use crate::core::app::App;
+use crate::core::app::{App, ProcessStatus};
 
 async fn invoke_handler<T>(handle: Handle<T>, arg: &str, app_mutex: &Mutex<App>) {
     let json: Value = serde_json::from_str(arg).unwrap();
@@ -56,9 +59,23 @@ pub struct AppWrapper {
 }
 
 impl AppWrapper {
-    pub fn new() -> Self {
+    pub fn new(handle: Handle<()>) -> Self {
+        let (process_status_sender, mut rx) = mpsc::channel::<ProcessStatus>(16);
+        spawn(async move {
+            loop {
+                let process_status = rx.recv().await.unwrap();
+                let eval = format!(
+                    "window.onChangeProcessStatus({})",
+                    serde_json::to_string(&process_status).unwrap()
+                );
+                println!("<-- {}", eval);
+                handle
+                    .dispatch(move |web_view| web_view.eval(&eval))
+                    .unwrap_or_else(|err| eprintln!("{}", err));
+            }
+        });
         Self {
-            app: Arc::new(Mutex::new(App::new())),
+            app: Arc::new(Mutex::new(App::new(process_status_sender))),
         }
     }
 

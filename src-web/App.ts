@@ -1,12 +1,20 @@
+export interface ProcessStatus {
+  auCaptureOffsets: boolean;
+  auProcess: boolean;
+}
+
 declare const window: Window & {
   external: { invoke(arg: string): void };
+  onChangeProcessStatus: ((status: ProcessStatus) => void) | null;
 };
+
+function generateUniqueName() {
+  return `_${Math.floor(((Math.random() + 1) / 2) * Number.MAX_SAFE_INTEGER)}`;
+}
 
 function invoke<T>(type: string, payload: any): Promise<T> {
   return new Promise((resolve, reject) => {
-    const callback = `_${Math.floor(
-      ((Math.random() + 1) / 2) * Number.MAX_SAFE_INTEGER,
-    )}`;
+    const callback = generateUniqueName();
     (<any>window)[callback] = (err: any, value: T) => {
       delete (<any>window)[callback];
       if (err != null) {
@@ -53,9 +61,13 @@ export default class App {
   loadMemoryFromFile(index: number) {
     return invoke<void>('load_memory_from_file', { index });
   }
+
+  setOnChangeProcessStatus(listener: ((status: ProcessStatus) => void) | null) {
+    window.onChangeProcessStatus = listener;
+  }
 }
 
-export class AppMock {
+export class AppMock extends App {
   async gameSettingsList() {
     return [...Array(10).keys()].map((x) => ({
       name: `Mock ${x + 1}`,

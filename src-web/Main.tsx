@@ -6,14 +6,18 @@ import MainContent from './MainContent';
 export default function Main() {
   const app = useMemo(() => App.create(), []);
   const [state, setState] = useState({
+    processStatus: { auCaptureOffsets: false, auProcess: false },
     gameSettingsList: null as
       | readonly { name: string; gameSettings: Object | null }[]
       | null,
   });
   useEffect(() => {
     (async () => {
+      app.setOnChangeProcessStatus((processStatus) => {
+        setState((old) => ({ ...old, processStatus }));
+      });
       const gameSettingsList = await app.gameSettingsList();
-      setState({ gameSettingsList });
+      setState((old) => ({ ...old, gameSettingsList }));
     })().catch(console.error);
   }, []);
 
@@ -39,6 +43,7 @@ export default function Main() {
   }
   return (
     <MainContent
+      processStatus={state.processStatus}
       gameSettingsList={state.gameSettingsList}
       onChangeLabel={onChangeLabel}
       onClickLoad={onClickLoad}

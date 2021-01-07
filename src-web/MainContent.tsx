@@ -4,16 +4,33 @@ import {
   TextField,
   Typography,
   makeStyles,
+  CircularProgress,
 } from '@material-ui/core';
 import React, { useCallback, FocusEvent } from 'react';
+import { ProcessStatus } from './App';
 
 const useStyles = makeStyles({
   root: {
     marginTop: '16px',
   },
+  processStatusContainer: {
+    margin: '32px 0',
+    paddingLeft: '10px',
+    '& > li': {
+      listStyle: 'none',
+    },
+  },
+  processStatusItem: {
+    display: 'flex',
+    '& > div': {
+      width: '1em',
+      marginRight: '0.5em',
+      display: 'flex',
+      justifyContent: 'center',
+    },
+  },
   listContainer: {
     padding: 0,
-    margin: '32px 0',
   },
   listItem: {
     display: 'flex',
@@ -80,6 +97,7 @@ function ListItem(props: {
 }
 
 export interface Props {
+  processStatus: ProcessStatus;
   gameSettingsList: readonly { name: string; gameSettings: Object | null }[];
   onChangeLabel(index: number, value: string): void;
   onClickSave(index: number): void;
@@ -95,6 +113,32 @@ export default function MainContent(props: Props) {
         After LOAD, <b>change any of the settings in the game</b> to apply the
         settings to other players.
       </Typography>
+      <ul className={classes.processStatusContainer}>
+        <li>
+          <Typography className={classes.processStatusItem}>
+            <div>
+              {props.processStatus.auCaptureOffsets ? (
+                '✅'
+              ) : (
+                <CircularProgress size="2ex" />
+              )}
+            </div>
+            Offsets repository
+          </Typography>
+        </li>
+        <li>
+          <Typography className={classes.processStatusItem}>
+            <div>
+              {props.processStatus.auProcess ? (
+                '✅'
+              ) : (
+                <CircularProgress size="2ex" />
+              )}
+            </div>
+            Among Us Process
+          </Typography>
+        </li>
+      </ul>
       <ul className={classes.listContainer}>
         {props.gameSettingsList.map((x, i) => (
           <li className={classes.listItem}>

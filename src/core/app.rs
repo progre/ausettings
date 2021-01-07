@@ -1,6 +1,15 @@
 use std::{sync::Arc, time::Duration};
 
-use tokio::{spawn, sync::RwLock, task::JoinHandle, time::interval};
+use serde::Serialize;
+use tokio::{
+    spawn,
+    sync::{
+        mpsc::{self, Sender},
+        RwLock,
+    },
+    task::JoinHandle,
+    time::interval,
+};
 
 use super::{
     aucaptureoffsets::{AUCaptureOffsets, AUCaptureOffsetsError},
@@ -9,7 +18,17 @@ use super::{
     storage::{GameSettingsListItem, Storage},
 };
 
-async fn fetch_offsets(au_capture_offsets_lock: &RwLock<Option<AUCaptureOffsets>>) {
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProcessStatus {
+    pub au_capture_offsets: bool,
+    pub au_process: bool,
+}
+
+async fn fetch_offsets(
+    au_capture_offsets_lock: &RwLock<Option<AUCaptureOffsets>>,
+    on_change_status: Sender<()>,
+) {
     match AUCaptureOffsets::fetch() {
         Err(err) => {
             let msg = match err {
@@ -20,18 +39,28 @@ async fn fetch_offsets(au_capture_offsets_lock: &RwLock<Option<AUCaptureOffsets>
         }
         Ok(au_capture_offsets) => {
             *(au_capture_offsets_lock.write().await) = Some(au_capture_offsets);
+            on_change_status.send(()).await.unwrap();
         }
     }
 }
 
-async fn capture_process(au_process_lock: &RwLock<Option<AUProcess>>) {
-    let mut interval = interval(Duration::from_secs(1));
+async fn capture_process(
+    au_process_lock: &RwLock<Option<AUProcess>>,
+    on_change_status: Sender<()>,
+) {
+    let mut interval = interval(Duration::from_secs(3));
     loop {
         interval.tick().await;
-        if let Some(au_process) = au_process_lock.read().await.as_ref() {
+        let process_dead = if let Some(au_process) = au_process_lock.read().await.as_ref() {
             if au_process.process().is_active() {
                 continue;
             }
+            true
+        } else {
+            false
+        };
+        if process_dead {
+            *(au_process_lock.write().await) = None;
         }
         println!("Capturing au process...");
         match AUProcess::new() {
@@ -41,10 +70,12 @@ async fn capture_process(au_process_lock: &RwLock<Option<AUProcess>>) {
                     AUProcessError::DllNotFound(err) => format!("DLL not found({})", err),
                 };
                 eprintln!("Capture failed: {}", msg);
+                on_change_status.send(()).await.unwrap();
             }
             Ok(au_process) => {
                 println!("Captured.");
                 *(au_process_lock.write().await) = Some(au_process);
+                on_change_status.send(()).await.unwrap();
             }
         }
     }
@@ -58,17 +89,38 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub fn new(process_status_sender: Sender<ProcessStatus>) -> Self {
         let au_capture_offsets = Arc::new(RwLock::new(None));
         let au_process = Arc::new(RwLock::new(None));
+        let (on_change_status, mut rx) = mpsc::channel::<()>(16);
+        spawn({
+            let au_capture_offsets = au_capture_offsets.clone();
+            let au_process = au_process.clone();
+            async move {
+                loop {
+                    rx.recv().await.unwrap();
+                    println!("on_change_status");
+                    process_status_sender
+                        .send(ProcessStatus {
+                            au_capture_offsets: au_capture_offsets.read().await.is_some(),
+                            au_process: au_process.read().await.is_some(),
+                        })
+                        .await
+                        .unwrap();
+                }
+            }
+        });
+
         Self {
             _au_capture_offsets_task: spawn({
                 let au_capture_offsets = au_capture_offsets.clone();
-                async move { fetch_offsets(&au_capture_offsets).await }
+                let on_change_status = on_change_status.clone();
+                async move { fetch_offsets(&au_capture_offsets, on_change_status).await }
             }),
             _au_process_task: spawn({
                 let au_process = au_process.clone();
-                async move { capture_process(&au_process).await }
+                let on_change_status = on_change_status.clone();
+                async move { capture_process(&au_process, on_change_status).await }
             }),
             au_capture_offsets,
             au_process,
