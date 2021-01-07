@@ -1,7 +1,6 @@
 use std::mem::size_of;
 use std::mem::transmute;
 use std::str::from_utf8;
-use winapi::shared::minwindef::{DWORD, HMODULE};
 use winapi::shared::ntdef::NULL;
 use winapi::shared::{basetsd::SIZE_T, minwindef::LPCVOID};
 use winapi::shared::{minwindef::FALSE, ntdef::HANDLE};
@@ -17,6 +16,10 @@ use winapi::um::tlhelp32::PROCESSENTRY32;
 use winapi::um::tlhelp32::TH32CS_SNAPPROCESS;
 use winapi::um::winnt::PROCESS_ALL_ACCESS;
 use winapi::{shared::minwindef::MAX_PATH, um::psapi::GetModuleBaseNameW};
+use winapi::{
+    shared::minwindef::{DWORD, HMODULE},
+    um::{minwinbase::STILL_ACTIVE, processthreadsapi::GetExitCodeProcess},
+};
 use winapi::{
     shared::minwindef::{LPVOID, TRUE},
     um::psapi::{EnumProcessModulesEx, GetModuleInformation, LIST_MODULES_ALL, MODULEINFO},
@@ -43,6 +46,13 @@ impl Process {
                     // old_protect: 0,
                 })
             }
+        }
+    }
+
+    pub fn is_active(&self) -> bool {
+        unsafe {
+            let mut exit_code: DWORD = 0;
+            GetExitCodeProcess(self.process, &mut exit_code) == TRUE && exit_code == STILL_ACTIVE
         }
     }
 

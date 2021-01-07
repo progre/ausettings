@@ -1,6 +1,6 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
-use tokio::{spawn, sync::RwLock, task::JoinHandle};
+use tokio::{spawn, sync::RwLock, task::JoinHandle, time::interval};
 
 use super::{
     aucaptureoffsets::{AUCaptureOffsets, AUCaptureOffsetsError},
@@ -9,27 +9,50 @@ use super::{
     storage::{GameSettingsListItem, Storage},
 };
 
-async fn fetch_offsets(
-    au_capture_offsets_lock: &RwLock<Option<AUCaptureOffsets>>,
-) -> Result<(), AUCaptureOffsetsError> {
-    let au_capture_offsets = AUCaptureOffsets::fetch()?;
-    *(au_capture_offsets_lock.write().await) = Some(au_capture_offsets);
-    Ok(())
+async fn fetch_offsets(au_capture_offsets_lock: &RwLock<Option<AUCaptureOffsets>>) {
+    match AUCaptureOffsets::fetch() {
+        Err(err) => {
+            let msg = match err {
+                AUCaptureOffsetsError::FetchFailed(err) => format!("Fetch failed ({})", err),
+                AUCaptureOffsetsError::ParseFailed(err) => format!("Parse failed ({})", err),
+            };
+            eprintln!("Fetch failed: {}", msg);
+        }
+        Ok(au_capture_offsets) => {
+            *(au_capture_offsets_lock.write().await) = Some(au_capture_offsets);
+        }
+    }
 }
 
-async fn capture_process(
-    au_process_lock: &RwLock<Option<AUProcess>>,
-) -> Result<(), AUProcessError> {
-    if au_process_lock.read().await.is_some() {
-        return Ok(());
+async fn capture_process(au_process_lock: &RwLock<Option<AUProcess>>) {
+    let mut interval = interval(Duration::from_secs(1));
+    loop {
+        interval.tick().await;
+        if let Some(au_process) = au_process_lock.read().await.as_ref() {
+            if au_process.process().is_active() {
+                continue;
+            }
+        }
+        println!("Capturing au process...");
+        match AUProcess::new() {
+            Err(err) => {
+                let msg = match err {
+                    AUProcessError::ProcessNotFound => "Process not found".into(),
+                    AUProcessError::DllNotFound(err) => format!("DLL not found({})", err),
+                };
+                eprintln!("Capture failed: {}", msg);
+            }
+            Ok(au_process) => {
+                println!("Captured.");
+                *(au_process_lock.write().await) = Some(au_process);
+            }
+        }
     }
-    *(au_process_lock.write().await) = Some(AUProcess::new()?);
-    Ok(())
 }
 
 pub struct App {
-    _au_capture_offsets_task: JoinHandle<Result<(), AUCaptureOffsetsError>>,
-    _au_process_task: JoinHandle<Result<(), AUProcessError>>,
+    _au_capture_offsets_task: JoinHandle<()>,
+    _au_process_task: JoinHandle<()>,
     au_capture_offsets: Arc<RwLock<Option<AUCaptureOffsets>>>,
     au_process: Arc<RwLock<Option<AUProcess>>>,
 }
