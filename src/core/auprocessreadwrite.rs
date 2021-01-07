@@ -3,6 +3,8 @@ use super::{
     process::Process,
 };
 
+const ENABLE_UNCONTROLLABLE_PARAMS: bool = false;
+
 struct Offsets {
     game_options_offset: u32,
     game_settings_relative_address: [u32; 2],
@@ -105,7 +107,9 @@ impl GameSettings {
 
     fn write(&self, process: &Process, offsets: &Offsets) {
         let base_addr = base_addr(process, offsets);
-        process.write_i32(base_addr + offsets.map, self.map);
+        if ENABLE_UNCONTROLLABLE_PARAMS {
+            process.write_i32(base_addr + offsets.map, self.map);
+        }
         process.write_f32(base_addr + offsets.player_speed, self.player_speed);
         process.write_f32(base_addr + offsets.crewmate_vision, self.crewmate_vision);
         process.write_f32(base_addr + offsets.impostor_vision, self.impostor_vision);
@@ -121,7 +125,9 @@ impl GameSettings {
             base_addr + offsets.emergency_cooldown,
             self.emergency_cooldown,
         );
-        process.write_i32(base_addr + offsets.impostors, self.impostors);
+        if ENABLE_UNCONTROLLABLE_PARAMS {
+            process.write_i32(base_addr + offsets.impostors, self.impostors);
+        }
         process.write_i32(base_addr + offsets.kill_distance, self.kill_distance);
         process.write_i32(base_addr + offsets.discussion_time, self.discussion_time);
         process.write_i32(base_addr + offsets.voting_time, self.voting_time);

@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GameSettings {
+    #[serde(skip)]
     pub map: i32,
     pub player_speed: f32,
     pub crewmate_vision: f32,
@@ -13,6 +14,7 @@ pub struct GameSettings {
     pub short_tasks: i32,
     pub emergency_meeting: i32,
     pub emergency_cooldown: i32,
+    #[serde(skip)]
     pub impostors: i32,
     pub kill_distance: i32,
     pub discussion_time: i32,
