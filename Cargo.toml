@@ -29,7 +29,8 @@ version = '1.0'
 features = ['full']
 
 [dependencies.web-view]
-git = 'https://github.com/Boscop/web-view.git'
+git = 'https://github.com/progre/web-view'
+branch = 'revert-218-master'
 features = ['edge']
 [target."cfg(windows)".dependencies.winapi]
 version = '0.3'

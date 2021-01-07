@@ -1709,7 +1709,7 @@ dependencies = [
 [[package]]
 name = "web-view"
 version = "0.7.2"
-source = "git+https://github.com/Boscop/web-view.git#1c20b9256aa786163fe4eed291f517eb5d3f02d5"
+source = "git+https://github.com/progre/web-view?branch=revert-218-master#3982acc59ddc75ed07cabdddc4af8048a34a7b41"
 dependencies = [
  "boxfnonce",
  "tinyfiledialogs",
@@ -1742,7 +1742,7 @@ dependencies = [
 [[package]]
 name = "webview-sys"
 version = "0.6.1"
-source = "git+https://github.com/Boscop/web-view.git#1c20b9256aa786163fe4eed291f517eb5d3f02d5"
+source = "git+https://github.com/progre/web-view?branch=revert-218-master#3982acc59ddc75ed07cabdddc4af8048a34a7b41"
 dependencies = [
  "cc",
  "gdk-sys",
