@@ -135,7 +135,7 @@ export default function MainContent(props: Props) {
                 <CircularProgress size="2ex" />
               )}
             </div>
-            Among Us Process
+            Among Us process
           </Typography>
         </li>
       </ul>
