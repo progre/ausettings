@@ -1,4 +1,4 @@
-# ausettings
+# ausettings <img src="icon.ico" width="32">
 
 Save &amp; Load for Among Us game settings.
 
