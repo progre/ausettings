@@ -18,6 +18,13 @@ use super::{
     storage::{GameSettingsListItem, Storage},
 };
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InitResponse<'a> {
+    pub au_offsets_repository_url: &'a str,
+    pub game_settings_list: Vec<GameSettingsListItem>,
+}
+
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProcessStatus {
@@ -28,8 +35,9 @@ pub struct ProcessStatus {
 async fn fetch_offsets(
     au_capture_offsets_lock: &RwLock<Option<AUCaptureOffsets>>,
     on_change_status: Sender<()>,
+    url: &str,
 ) {
-    match AUCaptureOffsets::fetch() {
+    match AUCaptureOffsets::fetch(url) {
         Err(err) => {
             let msg = match err {
                 AUCaptureOffsetsError::FetchFailed(err) => format!("Fetch failed ({})", err),
@@ -82,6 +90,7 @@ async fn capture_process(
 }
 
 pub struct App {
+    au_capture_offsets_url: String,
     _au_capture_offsets_task: JoinHandle<()>,
     _au_process_task: JoinHandle<()>,
     au_capture_offsets: Arc<RwLock<Option<AUCaptureOffsets>>>,
@@ -90,6 +99,8 @@ pub struct App {
 
 impl App {
     pub fn new(process_status_sender: Sender<ProcessStatus>) -> Self {
+        let au_capture_offsets_url =
+            "https://raw.githubusercontent.com/denverquane/amonguscapture/master/Offsets.json";
         let au_capture_offsets = Arc::new(RwLock::new(None));
         let au_process = Arc::new(RwLock::new(None));
         let (on_change_status, mut rx) = mpsc::channel::<()>(16);
@@ -112,10 +123,18 @@ impl App {
         });
 
         Self {
+            au_capture_offsets_url: au_capture_offsets_url.into(),
             _au_capture_offsets_task: spawn({
                 let au_capture_offsets = au_capture_offsets.clone();
                 let on_change_status = on_change_status.clone();
-                async move { fetch_offsets(&au_capture_offsets, on_change_status).await }
+                async move {
+                    fetch_offsets(
+                        &au_capture_offsets,
+                        on_change_status,
+                        au_capture_offsets_url,
+                    )
+                    .await
+                }
             }),
             _au_process_task: spawn({
                 let au_process = au_process.clone();
@@ -127,8 +146,15 @@ impl App {
         }
     }
 
-    pub async fn game_settings_list(&mut self) -> Vec<GameSettingsListItem> {
-        Storage::load().game_settings_list
+    pub async fn init<'a>(&'a self) -> InitResponse<'a> {
+        InitResponse {
+            au_offsets_repository_url: &self.au_capture_offsets_url,
+            game_settings_list: Storage::load().game_settings_list,
+        }
+    }
+
+    pub fn open_browser(&self, url: &str) {
+        webbrowser::open(url).unwrap();
     }
 
     pub fn set_game_settings_name(&self, idx: usize, name: String) -> bool {

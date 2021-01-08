@@ -7,6 +7,7 @@ export default function Main() {
   const app = useMemo(() => App.create(), []);
   const [state, setState] = useState({
     processStatus: { auCaptureOffsets: false, auProcess: false },
+    auOffsetsRepositoryUrl: '',
     gameSettingsList: null as
       | readonly { name: string; gameSettings: Object | null }[]
       | null,
@@ -16,11 +17,14 @@ export default function Main() {
       app.setOnChangeProcessStatus((processStatus) => {
         setState((old) => ({ ...old, processStatus }));
       });
-      const gameSettingsList = await app.gameSettingsList();
-      setState((old) => ({ ...old, gameSettingsList }));
+      const { auOffsetsRepositoryUrl, gameSettingsList } = await app.init();
+      setState((old) => ({ ...old, auOffsetsRepositoryUrl, gameSettingsList }));
     })().catch(console.error);
   }, []);
 
+  const onClickOpenAUOffsetsRepository = useCallback(async () => {
+    await app.openBrowser(state.auOffsetsRepositoryUrl);
+  }, [state.auOffsetsRepositoryUrl]);
   const onChangeLabel = useCallback(async (idx, value) => {
     await app.setGameSettingsName(idx, value);
   }, []);
@@ -44,7 +48,9 @@ export default function Main() {
   return (
     <MainContent
       processStatus={state.processStatus}
+      auOffsetsRepositoryUrl={state.auOffsetsRepositoryUrl}
       gameSettingsList={state.gameSettingsList}
+      onClickOpenAUOffsetsRepository={onClickOpenAUOffsetsRepository}
       onChangeLabel={onChangeLabel}
       onClickLoad={onClickLoad}
       onClickSave={onClickSave}

@@ -11,21 +11,24 @@ use crate::core::app::{App, ProcessStatus};
 
 async fn invoke_handler<T>(handle: Handle<T>, arg: &str, app_mutex: &Mutex<App>) {
     let json: Value = serde_json::from_str(arg).unwrap();
-    let mut app = app_mutex.lock().await;
+    let app = app_mutex.lock().await;
+    let payload = &json["payload"];
     let (err, result) = match json["type"].as_str().unwrap() {
-        "game_settings_list" => (
+        "init" => (
             "null".to_owned(),
-            serde_json::to_string(&app.game_settings_list().await).unwrap(),
+            serde_json::to_string(&app.init().await).unwrap(),
         ),
+        "open_browser" => {
+            app.open_browser(payload["url"].as_str().unwrap());
+            ("null".to_owned(), "null".to_owned())
+        }
         "set_game_settings_name" => {
-            let payload = &json["payload"];
             let idx = payload["index"].as_u64().unwrap() as usize;
             let name = payload["name"].as_str().unwrap();
             app.set_game_settings_name(idx, name.into());
             ("null".into(), "null".into())
         }
         "save_memory_to_file" => {
-            let payload = &json["payload"];
             let idx = payload["index"].as_u64().unwrap() as usize;
             match app.save_memory_to_file(idx).await {
                 Some(_) => ("null".into(), "null".into()),
@@ -33,7 +36,6 @@ async fn invoke_handler<T>(handle: Handle<T>, arg: &str, app_mutex: &Mutex<App>)
             }
         }
         "load_memory_from_file" => {
-            let payload = &json["payload"];
             let idx = payload["index"].as_u64().unwrap() as usize;
             match app.load_memory_from_file(idx).await {
                 Some(_) => ("null".into(), "null".into()),

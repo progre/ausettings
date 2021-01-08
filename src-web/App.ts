@@ -46,8 +46,11 @@ export default class App {
     return new App();
   }
 
-  gameSettingsList() {
-    return invoke<readonly GameSettingsListItem[]>('game_settings_list', {});
+  init() {
+    return invoke<{
+      auOffsetsRepositoryUrl: string;
+      gameSettingsList: readonly GameSettingsListItem[];
+    }>('init', {});
   }
 
   setGameSettingsName(index: number, name: string) {
@@ -65,19 +68,20 @@ export default class App {
   setOnChangeProcessStatus(listener: ((status: ProcessStatus) => void) | null) {
     window.onChangeProcessStatus = listener;
   }
+
+  openBrowser(url: string) {
+    return invoke<void>('open_browser', { url });
+  }
 }
 
 export class AppMock extends App {
-  async gameSettingsList() {
-    return [...Array(10).keys()].map((x) => ({
-      name: `Mock ${x + 1}`,
-      gameSettings: x % 2 === 0 ? '' : null,
-    }));
+  async init() {
+    return {
+      auOffsetsRepositoryUrl: 'https://google.com',
+      gameSettingsList: [...Array(10).keys()].map((x) => ({
+        name: `Mock ${x + 1}`,
+        gameSettings: x % 2 === 0 ? '' : null,
+      })),
+    };
   }
-
-  async setGameSettingsName(index: number, name: string) {}
-
-  async saveMemoryToFile(index: number) {}
-
-  async loadMemoryFromFile(index: number) {}
 }

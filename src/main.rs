@@ -18,7 +18,7 @@ async fn main() {
     let web_view = web_view::builder()
         .title("ausettings")
         .content(Content::Html(include_str!("../dist/index.html")))
-        .size(416, 720)
+        .size(400, 693)
         .resizable(true)
         .debug(cfg!(debug_assertions))
         .user_data(())

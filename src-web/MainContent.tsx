@@ -98,7 +98,9 @@ function ListItem(props: {
 
 export interface Props {
   processStatus: ProcessStatus;
+  auOffsetsRepositoryUrl: string;
   gameSettingsList: readonly { name: string; gameSettings: Object | null }[];
+  onClickOpenAUOffsetsRepository(): void;
   onChangeLabel(index: number, value: string): void;
   onClickSave(index: number): void;
   onClickLoad(index: number): void;
@@ -123,7 +125,13 @@ export default function MainContent(props: Props) {
                 <CircularProgress size="2ex" />
               )}
             </div>
-            Offsets repository
+            <a
+              href=""
+              title={props.auOffsetsRepositoryUrl}
+              onClick={props.onClickOpenAUOffsetsRepository}
+            >
+              Offsets repository
+            </a>
           </Typography>
         </li>
         <li>
