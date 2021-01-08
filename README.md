@@ -1,2 +1,5 @@
 # ausettings
-Save &amp; Load for  Among Us game settings.
+
+Save &amp; Load for Among Us game settings.
+
+![](screenshot.jpg)
