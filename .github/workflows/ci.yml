@@ -36,6 +36,10 @@ jobs:
           mv target/release/ausettings.exe \
             ./artifact/ausettings.exe
           mv license-*.* ./artifact/
+      - uses: crazy-max/ghaction-upx@v1
+        with:
+          version: latest
+          file: ./artifact/ausettings.exe
       - uses: actions/upload-artifact@v2
         with:
           name: artifact
