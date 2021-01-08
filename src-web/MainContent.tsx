@@ -22,6 +22,7 @@ const useStyles = makeStyles({
   },
   processStatusItem: {
     display: 'flex',
+    alignItems: 'center',
     '& > div': {
       width: '1em',
       marginRight: '0.5em',
